@@ -1,48 +1,53 @@
 """
-Database Schemas
+Database Schemas for CareerPath
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model here maps to a MongoDB collection whose name is the lowercase
+of the class name. Example: Career -> "career" collection.
 """
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional, Literal
 
-from pydantic import BaseModel, Field
-from typing import Optional
+# Core domain models
+class Career(BaseModel):
+    icon: str = Field(..., description="Lucide icon name for the career")
+    name_en: str = Field(..., description="Career name (English)")
+    name_te: str = Field(..., description="Career name (Telugu)")
+    short_desc_en: str = Field(..., description="Short description (English)")
+    short_desc_te: str = Field(..., description="Short description (Telugu)")
+    salary_min: int = Field(..., ge=0, description="Minimum monthly salary (INR)")
+    salary_max: int = Field(..., ge=0, description="Maximum monthly salary (INR)")
+    education: str = Field(..., description="Required education path")
+    job_type: Literal['Government','Private','Self-employed','Mixed'] = 'Mixed'
+    field: str = Field(..., description="Field/industry e.g., Healthcare, Engineering")
+    skills: List[str] = Field(default_factory=list)
+    tags: List[str] = Field(default_factory=list, description="Keywords for matching")
+    growth_path_en: List[str] = Field(default_factory=list, description="Simple timeline labels (English)")
+    growth_path_te: List[str] = Field(default_factory=list, description="Simple timeline labels (Telugu)")
 
-# Example schemas (replace with your own):
+class SavedCareer(BaseModel):
+    user_id: str = Field(..., description="Logical user id or 'guest-<device>'")
+    career_id: str = Field(..., description="ObjectId string for the career")
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+class TestQuestion(BaseModel):
+    step: int = Field(..., ge=1)
+    question_en: str
+    question_te: str
+    options: List[dict] = Field(..., description="List of {key, label_en, label_te, icon}")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class TestSubmission(BaseModel):
+    user_id: Optional[str] = None
+    answers: List[str] = Field(..., description="Selected option keys per step")
 
-# Add your own schemas here:
-# --------------------------------------------------
+class TestResult(BaseModel):
+    user_id: Optional[str] = None
+    recommended_ids: List[str]
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Counselor(BaseModel):
+    name: str
+    phone: str
+    district: str
+
+class ContactMessage(BaseModel):
+    name: str
+    email: EmailStr
+    message: str
